@@ -28,15 +28,5 @@ exports.checkReviewOwnership = catchAsync(async (req, res, next) => {
 exports.getAllReviews = factory.getAll(Review);
 exports.getReview = factory.getOne(Review);
 exports.createReview = factory.createOne(Review);
-exports.updateReview = catchAsync(async (req, res) => {
-  const doc = req.review;
-  Object.assign(doc, req.body);
-  await doc.save();
-  res.status(200).json({
-    status: "success",
-    data: {
-      data: doc,
-    },
-  });
-});
+exports.updateReview = factory.updateOne(Review);
 exports.deleteReview = factory.deleteOne(Review);

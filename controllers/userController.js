@@ -4,6 +4,7 @@ const User = require("./../models/userModel");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
 const factory = require("./handlerFactory");
+const { uploadToCloudinary } = require("../config/cloudinary");
 
 const multerStorage = multer.memoryStorage();
 
@@ -25,13 +26,15 @@ exports.uploadUserPhoto = upload.single("photo");
 exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
   if (!req.file) return next();
 
-  req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
+  const filename = `user-${req.user.id}-${Date.now()}.jpeg`;
 
-  await sharp(req.file.buffer)
+  const buffer = await sharp(req.file.buffer)
     .resize(500, 500)
     .toFormat("jpeg")
     .jpeg({ quality: 90 })
-    .toFile(`public/images/users/${req.file.filename}`);
+    .toBuffer();
+  const uploadedPhoto = await uploadToCloudinary("users", buffer, filename);
+  req.body.photo = uploadedPhoto.secure_url;
 
   next();
 });

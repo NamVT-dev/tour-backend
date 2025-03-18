@@ -4,6 +4,7 @@ const Tour = require("./../models/tourModel");
 const catchAsync = require("./../utils/catchAsync");
 const factory = require("./handlerFactory");
 const AppError = require("./../utils/appError");
+const { uploadToCloudinary } = require("../config/cloudinary");
 
 const multerStorage = multer.memoryStorage();
 
@@ -26,14 +27,17 @@ exports.uploadTourImages = upload.fields([
 ]);
 
 exports.resizeTourImages = catchAsync(async (req, res, next) => {
-  if (!req.files.imageCover || !req.files.images) return next();
+  if (!req.files?.imageCover || !req.files?.images) return next();
   // 1) Cover image
-  req.body.imageCover = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
-  await sharp(req.files.imageCover[0].buffer)
+  const coverFilename = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
+  const buffer = await sharp(req.files.imageCover[0].buffer)
     .resize(2000, 1333)
     .toFormat("jpeg")
     .jpeg({ quality: 90 })
-    .toFile(`public/images/tours/${req.body.imageCover}`);
+    .toBuffer();
+
+  const uploadCover = await uploadToCloudinary(buffer, coverFilename);
+  req.body.imageCover = uploadCover.secure_url;
   // 2) Images
   req.body.images = [];
 
@@ -41,16 +45,29 @@ exports.resizeTourImages = catchAsync(async (req, res, next) => {
     req.files.images.map(async (file, i) => {
       const filename = `tour-${req.params.id}-${Date.now()}-${i + 1}.jpeg`;
 
-      await sharp(file.buffer)
+      const buffer = await sharp(file.buffer)
         .resize(2000, 1333)
         .toFormat("jpeg")
         .jpeg({ quality: 90 })
-        .toFile(`public/images/tours/${filename}`);
+        .toBuffer(); // Chuyển thành buffer
 
-      req.body.images.push(filename);
+      const uploadedImage = await uploadToCloudinary("tours", buffer, filename);
+      req.body.images.push(uploadedImage.secure_url); // Lưu URL ảnh
     })
   );
 
+  next();
+});
+
+exports.parseTourData = catchAsync(async (req, res, next) => {
+  if (!req.body?.locations && !req.body?.startLocation) return next();
+  console.log(req.body.locations);
+
+  if (req.body?.locations)
+    req.body.locations = JSON.parse(req.body.locations).locations;
+
+  if (req.body?.startLocation)
+    req.body.startLocation = JSON.parse(req.body.startLocation).startLocation;
   next();
 });
 

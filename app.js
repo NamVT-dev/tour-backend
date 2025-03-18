@@ -13,6 +13,7 @@ const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
 const registedRoutes = require("./routes/index");
 const bookingController = require("./controllers/bookingController");
+
 //Start app express
 const app = express();
 

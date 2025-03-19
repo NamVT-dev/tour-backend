@@ -34,7 +34,7 @@ exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
     .jpeg({ quality: 90 })
     .toBuffer();
   const uploadedPhoto = await uploadToCloudinary("users", buffer, filename);
-  req.body.photo = uploadedPhoto.secure_url;
+  req.file.filename = uploadedPhoto.secure_url;
 
   next();
 });

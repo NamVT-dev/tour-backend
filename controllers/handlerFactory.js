@@ -38,7 +38,6 @@ exports.updateOne = (Model) =>
 exports.createOne = (Model) =>
   catchAsync(async (req, res) => {
     const doc = await Model.create(req.body);
-    console.log(doc);
 
     res.status(201).json({
       status: "success",
@@ -66,18 +65,19 @@ exports.getOne = (Model, popOptions) =>
     });
   });
 
-exports.getAll = (Model) =>
+exports.getAll = (Model, searchTerm) =>
   catchAsync(async (req, res) => {
     // To allow for nested GET reviews on tour (hack)
     let filter = {};
     if (req.params.tourId) filter = { tour: req.params.tourId };
 
-    const features = new APIFeatures(Model.find(filter), req.query)
+    const features = new APIFeatures(Model.find(filter), req.query, searchTerm)
       .filter()
       .sort()
       .limitFields()
-      .paginate();
-    // const doc = await features.query.explain();
+      .paginate()
+      .search();
+
     const doc = await features.query;
 
     // SEND RESPONSE

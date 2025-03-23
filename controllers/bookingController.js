@@ -24,7 +24,7 @@ exports.getCheckoutSession = catchAsync(async (req, res) => {
             description: tour.summary,
             images: [tour.imageCover],
           },
-          unit_amount: tour.price * 10000,
+          unit_amount: tour.price,
         },
         quantity: 1,
       },
@@ -40,7 +40,7 @@ exports.getCheckoutSession = catchAsync(async (req, res) => {
 const createBookingCheckout = async (session) => {
   const tour = session.client_reference_id;
   const user = (await User.findOne({ email: session.customer_email })).id;
-  const price = session.amount_total / 100;
+  const price = session.amount_total;
   await Booking.create({ tour, user, price });
 };
 
@@ -62,6 +62,14 @@ exports.webhookCheckout = (req, res) => {
 
   res.status(200).json({ received: true });
 };
+
+exports.getUserBooking = catchAsync(async (req, res) => {
+  const bookings = await Booking.find({ user: req.user.id }).select("-user");
+  res.status(200).json({
+    status: "success",
+    data: bookings,
+  });
+});
 
 exports.createBooking = factory.createOne(Booking);
 exports.getBooking = factory.getOne(Booking);

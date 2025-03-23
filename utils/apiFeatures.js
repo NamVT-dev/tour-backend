@@ -1,12 +1,15 @@
+const _ = require("lodash");
+
 class APIFeatures {
-  constructor(query, queryString) {
+  constructor(query, queryString, searchTerm = "") {
     this.query = query;
     this.queryString = queryString;
+    this.searchTerm = searchTerm;
   }
 
   filter() {
     const queryObj = { ...this.queryString };
-    const excludedFields = ["page", "sort", "limit", "fields"];
+    const excludedFields = ["page", "sort", "limit", "fields", "search"];
     excludedFields.forEach((el) => delete queryObj[el]);
 
     let queryStr = JSON.stringify(queryObj);
@@ -46,6 +49,19 @@ class APIFeatures {
 
     this.query = this.query.skip(skip).limit(limit);
 
+    return this;
+  }
+
+  search() {
+    if (this.queryString.search && this.searchTerm) {
+      const search = {
+        [this.searchTerm]: {
+          $regex: _.escapeRegExp(this.queryString.search),
+          $options: "i",
+        },
+      };
+      this.query = this.query.find(search);
+    }
     return this;
   }
 }

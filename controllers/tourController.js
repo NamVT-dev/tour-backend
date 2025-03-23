@@ -36,7 +36,7 @@ exports.resizeTourImages = catchAsync(async (req, res, next) => {
     .jpeg({ quality: 90 })
     .toBuffer();
 
-  const uploadCover = await uploadToCloudinary(buffer, coverFilename);
+  const uploadCover = await uploadToCloudinary("tours", buffer, coverFilename);
   req.body.imageCover = uploadCover.secure_url;
   // 2) Images
   req.body.images = [];
@@ -59,18 +59,6 @@ exports.resizeTourImages = catchAsync(async (req, res, next) => {
   next();
 });
 
-exports.parseTourData = catchAsync(async (req, res, next) => {
-  if (!req.body?.locations && !req.body?.startLocation) return next();
-  console.log(req.body.locations);
-
-  if (req.body?.locations)
-    req.body.locations = JSON.parse(req.body.locations).locations;
-
-  if (req.body?.startLocation)
-    req.body.startLocation = JSON.parse(req.body.startLocation).startLocation;
-  next();
-});
-
 exports.aliasTopTours = (req, res, next) => {
   req.query.limit = "5";
   req.query.sort = "-ratingsAverage,price";
@@ -78,7 +66,7 @@ exports.aliasTopTours = (req, res, next) => {
   next();
 };
 
-exports.getAllTours = factory.getAll(Tour);
+exports.getAllTours = factory.getAll(Tour, "name");
 exports.getTour = factory.getOne(Tour, { path: "reviews" });
 exports.createTour = factory.createOne(Tour);
 exports.updateTour = factory.updateOne(Tour);
